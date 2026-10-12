@@ -9,7 +9,7 @@
 - ブラウザーで月曜・日曜を20人まで操作してクリア。ソルバーの検証経路を使った操作テストであり、所要時間は人の難易度評価には使わない。
 - 本番URL: https://kuronuri-hyakka-7tn.pages.dev/yougisha/ 。静的Pagesで公開。
 - 専用Publicリポジトリ: https://github.com/pclidao-oss/kyou-no-yougisha 。毎日のworkflowを登録し、初回手動実行で全問テスト・ビルドが成功。予定時刻の自動実行は次回に確認する。
-- 全国集計は既定で停止。既存Cloudflareアカウントの有料契約があるため、無料限定条件を満たす公開方式の判断が必要。
+- 既存のWorkers Paid利用についてユーザー承認を受け、専用D1で全国集計と非公開の運営記録を有効化。本番API・管理画面を確認。新しい契約は追加していない。
 - 既存ゲームの手元の作業ディレクトリ・判定Worker・DB・DNSには変更していない。最新GitHubソースを別コピーへ取得し、新ゲームの静的ファイル・新ゲーム専用ヘッダー・相互リンクをリモートへ保存。既存Workerの再配備は実行していない。
 
 ## ローカル起動
@@ -69,11 +69,11 @@ localStorageの読み書きはtry/catch。進行は合法な判定の順で復�
 
 `node scripts/integrate.mjs <既存Pagesのソースコピー>` で `site/yougisha` と、既存トップのフッターリンク1つを追加。既存 `_worker.js` と `_routes.json` は変更せず、静的配信できない設定なら停止する。新ゲームだけは独自のCSPをHTML metaで指定し、X-Frame-Options: DENYを付ける。既存ゲームのCSPは維持。配備前に公開16ファイルが最新ソースと一致することを確認し、既存ゲームの33テストを通した。
 
-全国集計の `server/api.js` とD1の `server/schema.sql` は独立。公開時は `/yougisha/api/summary`、`/yougisha/api/event`、`/yougisha/stats` を新APIに配線する。`DB` binding、ランダムな `METRICS_SALT` と `STATS_KEY`、`METRICS_ENABLED=true` が必要。秘密値はSecretに入れ、公開JSON・リポジトリ・URL共有に入れない。管理画面は数字のJSONを返す。管理URLのkeyは第三者へ共有しない。
+全国集計の `server/api.js` とD1の `server/schema.sql` は独立。公開時は `/yougisha/api/summary`、`/yougisha/api/event`、`/yougisha/stats` を新APIに配線する。`DB` binding、ランダムな `METRICS_SALT` と `STATS_KEY`、`METRICS_ENABLED=true` が必要。秘密値はSecretに入れ、公開JSON・リポジトリ・URL共有に入れない。管理画面は数字のHTMLを表示し、`/yougisha/api/stats` はJSONを返す。Authorization Bearerにも対応。管理URLのkeyは第三者へ共有しない。
 
-承認後に使うPages用の具体的なルートは `server/pages-worker.js` と `server/pages-routes.json` に用意した。Pages binding名は `YOUGISHA_DB`、Secretsは `YOUGISHA_METRICS_SALT` / `YOUGISHA_STATS_KEY`、変数は `YOUGISHA_METRICS_ENABLED`。静的な本番公開には、このラッパーや新ルートを含めていない。
+承認後に使うPages用の具体的なルートは `server/pages-worker.js` と `server/pages-routes.json` に用意した。Pages binding名は `YOUGISHA_DB`、Secretsは `YOUGISHA_METRICS_SALT` / `YOUGISHA_STATS_KEY`、変数は `YOUGISHA_METRICS_ENABLED`。本番はこのラッパーと新ルートを含む。既存 `/api/*` は従来のGAMEへ転送し、新ゲーム用だけを専用D1へ接続する。
 
-最終確認: 新ゲーム16テスト、既存ゲーム33テストが成功。本番55ファイルが保存したソースと一致。今日の問題を本番の390px幅で20人まで判定し結果コピーが成功。既存ゲームは第197問を読み込み、語句入力が有効。Public Actionsの最終実行も成功: https://github.com/pclidao-oss/kyou-no-yougisha/actions/runs/38275100535 。
+最終確認: 新ゲーム16テスト、既存ゲーム34テストが成功。本番55ファイルが保存したソースと一致。今日の問題を本番の390px幅で20人まで判定し結果コピーが成功。既存ゲームは第197問を読み込み、語句入力が有効。Public Actionsの最終実行も成功: https://github.com/pclidao-oss/kyou-no-yougisha/actions/runs/38275100535 。
 
 公開前に `node scripts/check-free.mjs` でCloudflare契約を読む。未確認・有料契約・不完全な一覧なら停止。既存の百科事典側 `freeAccount()` は有料契約を許容するので、本ゲームの無料確認には使わない。Pagesの静的配信とWorkers/D1の従量利用は区別する。既存の有料契約のダウングレードは他作品へ影響するため行わない。
 
@@ -83,7 +83,7 @@ localStorageの読み書きはtry/catch。進行は合法な判定の順で復�
 
 開始は端末×問題日で1回、クリアは最初の時間だけ、共有は操作回数（端末×問題日100回まで）。全国平均と上位%は申告タイムの集計。同タイムを含め、速いほうから自分以下の秒数の割合を求める。改ざん防止の大会順位ではない。7日再訪は初参加日からちょうど7日後にイベントがあった端末の比率で、8日後以降では代替しない。
 
-1日5000イベントをDBのカウンターで受け付ける補助上限あり。DB読み取りや拒否時のアクセスまで無料にする仕組みではなく、Paidアカウントで追加費用を完全に防ぐ上限ではない。APIは同一Originのみ受け付け、集計の失敗はプレイを止めない。本番で有効化するときは計測説明を共有プライバシーポリシーにも追加する。
+1日5000イベントをDBのカウンターで受け付ける補助上限あり。DB読み取りや拒否時のアクセスまで無料にする仕組みではなく、Paidアカウントで追加費用を完全に防ぐ上限ではない。APIは同一Originのみ受け付け、集計の失敗はプレイを止めない。ゲーム内と共有プライバシーポリシーに計測説明を追加済み。
 
 ## Actionが止まったときの直し方
 
@@ -102,7 +102,7 @@ localStorageの読み書きはtry/catch。進行は合法な判定の順で復�
 - 既存ゲームに未コミット変更が多いため、最新GitHubソースを別コピーへ取得して統合を試行。
 - 一般的な手がかりだけでは生成が詰まるため、名前を指定する人数制約も追加した。
 - 正解難読化とブラウザー判定は今回の仕様を優先。秘匿と不正防止を保証しない。
-- 契約記録がPaidなので、全国集計の配備を無料とみなさず停止中。
+- 既存Paid契約の利用はユーザー承認済み。専用DBとSecretで既存ゲームから分離した。
 
 ## 試遊で気になったこと
 
@@ -110,7 +110,7 @@ localStorageの読み書きはtry/catch。進行は合法な判定の順で復�
 
 ## 次にやること
 
-1. 全国集計の無料条件を解決し、実際の時刻による毎日Actionsの自動実行を確認。
+1. 実際の予定時刻による毎日Actionsの自動実行を確認。
 2. 日曜に隣・職業・行列を使う複合推理を増やし、名前列挙の繰り返しを減らす。
 3. 人の試遊時間を集めて難易度の数値と実際の難しさを調整する。
 
