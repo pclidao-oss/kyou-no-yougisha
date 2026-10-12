@@ -71,6 +71,10 @@ localStorageの読み書きはtry/catch。進行は合法な判定の順で復�
 
 全国集計の `server/api.js` とD1の `server/schema.sql` は独立。公開時は `/yougisha/api/summary`、`/yougisha/api/event`、`/yougisha/stats` を新APIに配線する。`DB` binding、ランダムな `METRICS_SALT` と `STATS_KEY`、`METRICS_ENABLED=true` が必要。秘密値はSecretに入れ、公開JSON・リポジトリ・URL共有に入れない。管理画面は数字のJSONを返す。管理URLのkeyは第三者へ共有しない。
 
+承認後に使うPages用の具体的なルートは `server/pages-worker.js` と `server/pages-routes.json` に用意した。Pages binding名は `YOUGISHA_DB`、Secretsは `YOUGISHA_METRICS_SALT` / `YOUGISHA_STATS_KEY`、変数は `YOUGISHA_METRICS_ENABLED`。静的な本番公開には、このラッパーや新ルートを含めていない。
+
+最終確認: 新ゲーム16テスト、既存ゲーム33テストが成功。本番55ファイルが保存したソースと一致。今日の問題を本番の390px幅で20人まで判定し結果コピーが成功。既存ゲームは第197問を読み込み、語句入力が有効。Public Actionsの最終実行も成功: https://github.com/pclidao-oss/kyou-no-yougisha/actions/runs/38275100535 。
+
 公開前に `node scripts/check-free.mjs` でCloudflare契約を読む。未確認・有料契約・不完全な一覧なら停止。既存の百科事典側 `freeAccount()` は有料契約を許容するので、本ゲームの無料確認には使わない。Pagesの静的配信とWorkers/D1の従量利用は区別する。既存の有料契約のダウングレードは他作品へ影響するため行わない。
 
 ## 全国集計と計測
