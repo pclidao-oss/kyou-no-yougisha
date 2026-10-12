@@ -1,0 +1,1 @@
+{"name":"kyou-no-yougisha-metrics","main":"api.js","compatibility_date":"2026-10-01","workers_dev":true,"vars":{"METRICS_ENABLED":"false"},"limits":{"cpu_ms":10},"observability":{"enabled":false}}
