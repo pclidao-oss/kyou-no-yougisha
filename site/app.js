@@ -1,3 +1,4 @@
+import {requestMetrics} from './metrics-request.js';
 import {createVisitorTracker} from './visitor.js';
 import {puzzleFile} from './puzzle-source.js';
 import {today,weekday,visible,shareText} from './logic.js';
@@ -12,7 +13,7 @@ function portrait(id){const face=el('span',undefined,'portrait look-'+id%10);fac
 function seconds(){return save.finished?save.seconds:Math.max(0,Math.floor((Date.now()-save.started)/1000));}
 function persist(){save.seconds=seconds();if(!write('game:'+p.date,save))$('notice').textContent='端末に保存できません。この画面を閉じると進行が失われます。';}
 function show(screen){for(const id of ['home','game','result'])$(id).hidden=id!==screen;}
-async function request(path,body){const r=await fetch('./api/'+path,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(5000)});if(!r.ok)throw Error('集計未接続');return r.json();}
+const request=requestMetrics;
 const visitor=createVisitorTracker({device,send:body=>request('event',body)});
 async function event(type){return visitor.event(type,p.date,type==='clear'?result.seconds:undefined);}
 async function load(date){$('start').disabled=true;p=await puzzleFile(date+'.json');known={[p.seed.id]:p.seed.value};save=read('game:'+date,null);if(!save||!Array.isArray(save.moves))save={moves:[],mistakes:[],hinted:[],missCount:0,hintCount:0,used:[],started:null,seconds:0,finished:false};hintStage=0;highClues=[];highResident=null;
